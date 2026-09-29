@@ -4,13 +4,15 @@
 #include "bsp_gpio.h"
 #include "esp_attr.h"
 #include "esp_log.h"
+#include "esp_timer.h"
 #include "hal/gpio_types.h"
 #include "led_strip_rmt.h"
 #include "led_strip_types.h"
 #include "soc/clk_tree_defs.h"
 
 #define BLINK_GPIO      48
-#define BUTTON_GPIO     GPIO_NUM_0
+#define CONTACT_BOUNCE_INTERVAL  50000
+#define BUTTON_GPIO         GPIO_NUM_0
 
 static const char * TAG = "BSP_GPIO";
 static led_strip_handle_t led_hdl = NULL;
@@ -19,7 +21,15 @@ volatile bool g_btn_pressed = false;
 
 static void IRAM_ATTR button_isr_handler(void * arg)
 {
-    g_btn_pressed = true;
+    // A simple debouncer I mean ?
+    uint64_t now = esp_timer_get_time();
+    static uint64_t last_intr_time = 0;
+
+    if (now - last_intr_time > CONTACT_BOUNCE_INTERVAL) {
+        g_btn_pressed = true;
+    }
+
+    last_intr_time = now;
 }
 
 void bsp_gpio_init_led(void)
@@ -68,9 +78,10 @@ void bsp_gpio_init_button(void) {
         ESP_LOGE(TAG, "Failed to initialize gpio config");
         return;
     }
-    if (gpio_install_isr_service(0) != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to install this ISR");
+    gpio_install_isr_service(0);    // Treat this as OK
+
+    if (gpio_isr_handler_add(BUTTON_GPIO, button_isr_handler, NULL) != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to add this ISR handler for GPIO PIN : %d", BUTTON_GPIO);
         return;
     }
-    gpio_isr_handler_add(BUTTON_GPIO, button_isr_handler, NULL);
 }
