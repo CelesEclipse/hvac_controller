@@ -1,17 +1,28 @@
 #include <led_strip.h>
+#include <driver/gpio.h>
 #include <stdint.h>
 #include "bsp_gpio.h"
+#include "esp_attr.h"
 #include "esp_log.h"
+#include "hal/gpio_types.h"
 #include "led_strip_rmt.h"
 #include "led_strip_types.h"
 #include "soc/clk_tree_defs.h"
 
-#define BLINK_GPIO  48
+#define BLINK_GPIO      48
+#define BUTTON_GPIO     GPIO_NUM_0
 
 static const char * TAG = "BSP_GPIO";
 static led_strip_handle_t led_hdl = NULL;
 
-void bsp_gpio_init(void)
+volatile bool g_btn_pressed = false;
+
+static void IRAM_ATTR button_isr_handler(void * arg)
+{
+    g_btn_pressed = true;
+}
+
+void bsp_gpio_init_led(void)
 {
     led_strip_config_t strip_cfg = {
         .strip_gpio_num = BLINK_GPIO,
@@ -42,4 +53,24 @@ void bsp_gpio_set_led_rgb(uint8_t r, uint8_t g, uint8_t b) {
     if ((ret = led_strip_refresh(led_hdl)) != ESP_OK) {
         ESP_LOGE(TAG, "Failed to refresh led color");
     }
+}
+
+void bsp_gpio_init_button(void) {
+    gpio_config_t io_cfg = {
+        .pin_bit_mask = (1ULL << BUTTON_GPIO),
+        .mode = GPIO_MODE_INPUT,
+        .pull_up_en = GPIO_PULLUP_ENABLE,
+        .pull_down_en = GPIO_PULLDOWN_DISABLE,
+        .intr_type = GPIO_INTR_NEGEDGE
+    };
+    
+    if (gpio_config(&io_cfg) != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to initialize gpio config");
+        return;
+    }
+    if (gpio_install_isr_service(0) != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to install this ISR");
+        return;
+    }
+    gpio_isr_handler_add(BUTTON_GPIO, button_isr_handler, NULL);
 }
