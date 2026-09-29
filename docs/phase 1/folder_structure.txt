@@ -1,0 +1,121 @@
+Phase 1:
+
+hvac-controller/
+│
+├── CMakeLists.txt
+├── sdkconfig
+│
+└── main/
+    ├── CMakeLists.txt
+    ├── main.c
+    │
+    ├── bsp/
+    │   ├── bsp_gpio.c
+    │   ├── bsp_gpio.h
+    │   ├── bsp_uart.c
+    │   ├── bsp_uart.h
+    │   ├── bsp_timer.c
+    │   └── bsp_timer.h
+    │
+    ├── drivers/
+    │   ├── led.c
+    │   ├── led.h
+    │   ├── button.c
+    │   └── button.h
+    │
+    └── cli/
+        ├── cli.c
+        └── cli.h
+		
+Roles:
+
+main.c It serves merely as an entry point and high-level orchestration,
+Don't turn main.c into a dumping ground for all the logic.
+
+void app_main(void)
+{
+    bsp_gpio_init();
+    bsp_uart_init();
+    bsp_timer_init();
+
+    led_init();
+    button_init();
+    cli_init();
+
+    while (1) {
+        ...
+    }
+}
+
+bsp/
+
+This is the Board Support Package layer—the interface layer close to the ESP32/ESP-IDF peripherals.
+
+For example:
+
+bsp_gpio
+bsp_uart
+bsp_timer
+
+It knows the ESP-IDF API.
+
+For example, bsp_gpio.c can call:
+
+gpio_config(...)
+gpio_set_level(...)
+gpio_get_level(...)
+
+The upper layers do not need to know that detail.
+
+drivers/
+
+Driver for the specific device.
+
+Example:
+
+led.c
+button.c
+
+led.c can use bsp_gpio.
+
+Relationship:
+
+led.c
+  │
+  ▼
+bsp_gpio.c
+  │
+  ▼
+ESP-IDF GPIO API
+  │
+  ▼
+ESP32 hardware
+
+An external example simply requires:
+
+led_on();
+led_off();
+
+instead of needing to:
+
+gpio_set_level(LED_GPIO, 1);
+cli/
+
+UART command processing section.
+
+For example:
+
+> status
+> set-temp 24
+> fan 70
+> mode cool
+
+cli.c is responsible for:
+
+receive command;
+parse command;
+dispatch command.
+
+HVAC business logic is not required for Phase 1.
+
+We only need to demonstrate that the UART and command parser are working.

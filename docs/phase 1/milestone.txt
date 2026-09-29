@@ -1,0 +1,50 @@
+Phase 1.1 — GPIO
+ESP32
+ ├── LED
+ └── Button
+ 
+Objectives:
+
+output GPIO;
+input GPIO;
+button debounce cơ bản;
+button → LED.
+
+Phase 1.2 — Timer + UART
+
+Timer
+  │
+  └── periodic event
+
+UART
+  │
+  └── terminal
+  
+Objectives:
+
+periodic timing;
+UART TX/RX;
+log/debug;
+Understand blocking and non-blocking concepts at a basic level.
+
+Phase 1.3 — CLI
+
+By the end of Phase 1, it must be possible to:
+
+> status
+Temperature: N/A
+Target: 24
+Fan: 0
+Mode: OFF
+
+> led on
+
+> led off
+
+Then:
+> set-temp 24
+> fan 70
+> mode cool
+
+However, in Phase 1, these commands only need to interact with the simulated state; 
+they do not yet require sensors, PWM, or control algorithms.
