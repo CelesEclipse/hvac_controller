@@ -9,7 +9,7 @@
 #include "soc/clk_tree_defs.h"
 
 #define TICK_RESOLUTION_HZ  1000000U
-#define TICK_PERIOD_HZ      1000U
+#define TICK_PERIOD_US      1000U
 
 static const char * TAG = "BSP_TIMER";
 static gptimer_handle_t s_timer = NULL;
@@ -51,7 +51,7 @@ esp_err_t bsp_timer_init_tick(void)
     if (ret != ESP_OK) return ret;
 
     gptimer_alarm_config_t alarm_cfg = {
-        .alarm_count = TICK_PERIOD_HZ,
+        .alarm_count = TICK_PERIOD_US,
         .reload_count = 0,
         .flags.auto_reload_on_alarm = true
     };

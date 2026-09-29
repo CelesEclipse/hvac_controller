@@ -11,7 +11,7 @@
 #include "soc/clk_tree_defs.h"
 
 #define BLINK_GPIO      48
-#define CONTACT_BOUNCE_INTERVAL  50000
+#define BUTTON_DEBOUNCE_US  50000
 #define BUTTON_GPIO         GPIO_NUM_0
 
 static const char * TAG = "BSP_GPIO";
@@ -22,14 +22,14 @@ volatile bool g_btn_pressed = false;
 static void IRAM_ATTR button_isr_handler(void * arg)
 {
     // A simple debouncer I mean ?
-    uint64_t now = esp_timer_get_time();
     static uint64_t last_intr_time = 0;
+    uint64_t now = esp_timer_get_time();
 
-    if (now - last_intr_time > CONTACT_BOUNCE_INTERVAL) {
+    if (gpio_get_level(BUTTON_GPIO) == 0 &&               // falling edge only
+        (now - last_intr_time) > BUTTON_DEBOUNCE_US) {
         g_btn_pressed = true;
     }
-
-    last_intr_time = now;
+    last_intr_time = now;                                    // every edge, rising too
 }
 
 void bsp_gpio_init_led(void)
@@ -71,7 +71,7 @@ void bsp_gpio_init_button(void) {
         .mode = GPIO_MODE_INPUT,
         .pull_up_en = GPIO_PULLUP_ENABLE,
         .pull_down_en = GPIO_PULLDOWN_DISABLE,
-        .intr_type = GPIO_INTR_NEGEDGE
+        .intr_type = GPIO_INTR_ANYEDGE  // NEGEDGE might never update last_intr_time in ISR
     };
     
     if (gpio_config(&io_cfg) != ESP_OK) {

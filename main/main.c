@@ -14,7 +14,11 @@ void app_main(void)
     led_init();
     bsp_gpio_init_button();
 
-    bsp_timer_init_tick();
+    if (bsp_timer_init_tick() != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to initialize bsp timer");
+        return;
+    }
+
     uint32_t last_hb = 0;
     ESP_LOGI(TAG, "Timer init done");
 
@@ -28,7 +32,6 @@ void app_main(void)
         if (g_btn_pressed) {
             g_btn_pressed = false;
             led_toggle();
-            esp_rom_delay_us(200 * 1000);
         }
         esp_rom_delay_us(10 * 1000);
     }
