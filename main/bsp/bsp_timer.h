@@ -1,5 +1,5 @@
-#ifndef _BSP_TIMER_H_
-#define _BSP_TIMER_H_
+#ifndef BSP_TIMER_H
+#define BSP_TIMER_H
 
 #include <stdint.h>
 #include "esp_err.h"

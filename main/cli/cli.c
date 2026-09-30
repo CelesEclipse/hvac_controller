@@ -1,27 +1,34 @@
 #include "cli.h"
 #include "bsp/bsp_uart.h"
+#include "app/app_state.h"
+
 #include <stddef.h>
+#include <stdint.h>
 #include <string.h>
 
 #define CLI_LINE_MAX    64
 #define CLI_ARGV_MAX    4
+#define OUT_BUF_SIZE    48
 
 static char     s_line[CLI_LINE_MAX];
 static size_t   s_len = 0;
 
 static int cmd_help(int argc, char *argv[]);
 static int cmd_status(int argc, char *argv[]);
+static int cmd_fan(int argc, char *argv[]);
 static const cli_cmd_t s_cmds[] = {
     {"help", cmd_help, "list commands"},
-    {"status", cmd_status, "show controller state"}
+    {"status", cmd_status, "show controller state"},
+    {"fan", cmd_fan, "set properties"}
 };
 
+static const char *const MODE_STR[] = { "OFF", "COOL", "HEAT", "FAN" };
+
 /*
-This shit is quite bizarre (AI wrote it) so I will visualize here for myself
 e.g
 Input: "  wifi   connect " -> meanwhile '''''w''i''f''i'''''''...'\0'
 max = 4
-Output: "\0\0wifi\0\0connect\0" -> tokens = 2
+Output: "\0\0wifi\0\0\0connect\0" -> tokens = 3
 */
 static int tokenize(char * line, char * argv[], int max)
 {
@@ -91,10 +98,38 @@ static int cmd_status(int argc, char *argv[])
         return -1;
     }
 
-    bsp_uart_write("Temperature: 27.4 C\r\n");
-    bsp_uart_write("Target: 24.0 C\r\n");
-    bsp_uart_write("Fan:         65 %\r\n");
-    bsp_uart_write("Mode:        COOL\r\n");
-    bsp_uart_write("Alarm:       NONE\r\n");
+    const hvac_state_t * s = app_state_get();
+    char buf[OUT_BUF_SIZE];
+
+    snprintf(buf, sizeof(buf), "Temperature: %d.%d C\r\n", s->temp_x10 / 10, s->temp_x10 % 10);
+    bsp_uart_write(buf);
+    snprintf(buf, sizeof buf, "Target:      %d.%d C\r\n", s->target_x10 / 10, s->target_x10 % 10);
+    bsp_uart_write(buf);
+    snprintf(buf, sizeof buf, "Fan:         %u %%\r\n", s->fan_percent);
+    bsp_uart_write(buf);
+    snprintf(buf, sizeof buf, "Mode:        %s\r\n", MODE_STR[s->mode]);
+    bsp_uart_write(buf);
+
+    return 0;
+}
+
+static int cmd_fan(int argc, char *argv[])
+{
+    if (argc != 2) {
+        bsp_uart_write("usage: fan <0-100>\r\n");
+        return -1;
+    }
+
+    char * end;
+    long v = strtol(argv[1], &end, 10);
+    if (end == argv[1] || *end != 0) {
+        bsp_uart_write("fan: invalid number\r\n");
+        return -1;
+    }
+    if (v < 0 || v > 100 || !app_state_set_fan((uint8_t)v)) {
+        bsp_uart_write("fan: must be 0-100\r\n");
+        return -1;
+    }
+    bsp_uart_write("OK\r\n");
     return 0;
 }

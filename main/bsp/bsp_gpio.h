@@ -1,5 +1,5 @@
-#ifndef _BSP_GPIO_H_
-#define _BSP_GPIO_H_
+#ifndef BSP_GPIO_H
+#define BSP_GPIO_H
 
 #include <stdint.h>
 

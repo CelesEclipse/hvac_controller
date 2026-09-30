@@ -1,5 +1,5 @@
-#ifndef _CLI_H_
-#define _CLI_H_
+#ifndef CLI_H
+#define CLI_H
 
 typedef int (*cli_fn_t)(int argc, char * argv[]);
 

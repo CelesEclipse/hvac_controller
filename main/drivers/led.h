@@ -1,5 +1,5 @@
-#ifndef _HVAC_LED_H_
-#define _HVAC_LED_H_
+#ifndef HVAC_LED_H
+#define HVAC_LED_H
 
 #include <stdint.h>
 void led_init(void);

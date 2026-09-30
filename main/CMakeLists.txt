@@ -5,4 +5,5 @@ idf_component_register(
             "bsp/bsp_timer.c"
             "bsp/bsp_uart.c"
             "cli/cli.c"
+            "app/app_state.c"
     INCLUDE_DIRS ".")

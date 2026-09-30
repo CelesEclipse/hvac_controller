@@ -1,5 +1,5 @@
-#ifndef _BSP_UART_H_
-#define _BSP_UART_H_
+#ifndef BSP_UART_H
+#define BSP_UART_H
 
 #include <stdint.h>
 #include <esp_err.h>
