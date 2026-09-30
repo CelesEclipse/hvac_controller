@@ -19,7 +19,7 @@ static int cmd_fan(int argc, char *argv[]);
 static const cli_cmd_t s_cmds[] = {
     {"help", cmd_help, "list commands"},
     {"status", cmd_status, "show controller state"},
-    {"fan", cmd_fan, "set properties"}
+    {"fan", cmd_fan, "set fan speed"}
 };
 
 static const char *const MODE_STR[] = { "OFF", "COOL", "HEAT", "FAN" };
