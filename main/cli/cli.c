@@ -5,6 +5,8 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #define CLI_LINE_MAX    64
 #define CLI_ARGV_MAX    4
@@ -16,13 +18,29 @@ static size_t   s_len = 0;
 static int cmd_help(int argc, char *argv[]);
 static int cmd_status(int argc, char *argv[]);
 static int cmd_fan(int argc, char *argv[]);
+static int cmd_temp(int argc, char * argv[]);
+static int cmd_mode(int argc, char * argv[]);
+
 static const cli_cmd_t s_cmds[] = {
     {"help", cmd_help, "list commands"},
     {"status", cmd_status, "show controller state"},
-    {"fan", cmd_fan, "set fan speed"}
+    {"fan", cmd_fan, "set fan speed"},
+    {"set-temp", cmd_temp, "set temperature"},
+    {"set-mode", cmd_mode, "set mode"}
 };
 
-static const char *const MODE_STR[] = { "OFF", "COOL", "HEAT", "FAN" };
+static const char * const MODE_STR[] = { "OFF", "COOL", "HEAT", "FAN" };
+static const char * const ALARM_STR[] = { "ALARM_NONE", "ALARM_SENSOR", "ALARM_OVERTEMP" };
+
+static hvac_mode_t string_to_state(const char * str)
+{
+    for (int i = 0; i < 4; ++i) {
+        if (strcmp(str, MODE_STR[i]) == 0) {
+            return (hvac_mode_t)i;
+        }
+    }
+    return (hvac_mode_t)-1;
+}
 
 /*
 e.g
@@ -109,6 +127,8 @@ static int cmd_status(int argc, char *argv[])
     bsp_uart_write(buf);
     snprintf(buf, sizeof buf, "Mode:        %s\r\n", MODE_STR[s->mode]);
     bsp_uart_write(buf);
+    snprintf(buf, sizeof(buf), "Alarm:      %s\r\n", ALARM_STR[s->alarm]);
+    bsp_uart_write(buf);
 
     return 0;
 }
@@ -128,6 +148,43 @@ static int cmd_fan(int argc, char *argv[])
     }
     if (v < 0 || v > 100 || !app_state_set_fan((uint8_t)v)) {
         bsp_uart_write("fan: must be 0-100\r\n");
+        return -1;
+    }
+    bsp_uart_write("OK\r\n");
+    return 0;
+}
+
+static int cmd_temp(int argc, char * argv[])
+{
+    if (argc != 2) {
+        bsp_uart_write("usage: temp <150-300>\r\n");
+        return -1;
+    }
+
+    char * end;
+    long v = strtol(argv[1], &end, 10);
+    if (end == argv[1] || *end != 0) {
+        bsp_uart_write("temp: invalid number\r\n");
+        return -1;
+    }
+    if (v < 150 || v > 300 || !app_state_set_temp((int16_t)v)) {
+        bsp_uart_write("temp: must be 150-300\r\n");
+        return -1;
+    }
+    bsp_uart_write("OK\r\n");
+    return 0;
+}
+
+static int cmd_mode(int argc, char * argv[])
+{
+    if (argc != 2) {
+        bsp_uart_write("usage: mode <0-3>\r\n");
+        return -1;
+    }
+
+    hvac_mode_t mode = string_to_state(argv[1]);
+    if (!app_state_set_mode(mode)) {
+        bsp_uart_write("Invalid mode\r\n");
         return -1;
     }
     bsp_uart_write("OK\r\n");

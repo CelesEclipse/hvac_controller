@@ -2,6 +2,7 @@
 #define APP_APPSTATE_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 typedef enum {MODE_OFF, MODE_COOL, MODE_HEAT, MODE_FAN} hvac_mode_t;
 typedef enum {ALARM_NONE, ALARM_SENSOR, ALARM_OVERTEMP} hvac_alarm_t;
@@ -17,5 +18,7 @@ typedef struct
 
 const hvac_state_t * app_state_get(void);
 bool app_state_set_fan(uint8_t percent);
+bool app_state_set_temp(int16_t temp);
+bool app_state_set_mode(hvac_mode_t mode);
 
 #endif

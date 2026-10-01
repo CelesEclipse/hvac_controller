@@ -8,10 +8,9 @@
 #include "bsp/bsp_uart.h"
 #include "cli/cli.h"
 
-extern volatile bool g_btn_pressed;
 static const char * TAG = "MAIN";
 
-#define CLI_TEST    1
+#define CLI_TEST    0
 
 void app_main(void)
 {
@@ -44,11 +43,13 @@ void app_main(void)
             ESP_LOGI(TAG, "heartbeat, uptime %lu ms", (unsigned long)now);
         }
 
-        if (g_btn_pressed) {
-            g_btn_pressed = false;
-            led_toggle();
+        if (bsp_gpio_take_button_event()) {
+            vTaskDelay(pdMS_TO_TICKS(20));
+            (void)bsp_gpio_take_button_event();
+            if (bsp_gpio_button_is_pressed()) {
+                led_toggle();
+            }
         }
-        esp_rom_delay_us(10 * 1000);
 #endif
         vTaskDelay(pdMS_TO_TICKS(10));
     }

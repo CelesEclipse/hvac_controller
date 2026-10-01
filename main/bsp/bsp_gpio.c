@@ -17,7 +17,7 @@
 static const char * TAG = "BSP_GPIO";
 static led_strip_handle_t led_hdl = NULL;
 
-volatile bool g_btn_pressed = false;
+static volatile bool g_btn_pressed = false;
 
 static void IRAM_ATTR button_isr_handler(void * arg)
 {
@@ -48,7 +48,9 @@ void bsp_gpio_init_led(void)
     esp_err_t ret = led_strip_new_rmt_device(&strip_cfg, &strip_rmtcfg, &led_hdl);
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "Failed to initialize RMT for led");
+        return;
     }
+
     led_strip_clear(led_hdl);
 }
 
@@ -84,4 +86,16 @@ void bsp_gpio_init_button(void) {
         ESP_LOGE(TAG, "Failed to add this ISR handler for GPIO PIN : %d", BUTTON_GPIO);
         return;
     }
+}
+
+bool bsp_gpio_take_button_event(void)
+{
+    bool ev = g_btn_pressed;
+    g_btn_pressed = false;
+    return ev;
+}
+
+bool bsp_gpio_button_is_pressed(void)
+{
+    return gpio_get_level(BUTTON_GPIO) == 0;
 }
