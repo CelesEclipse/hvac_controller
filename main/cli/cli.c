@@ -1,6 +1,7 @@
 #include "cli.h"
 #include "bsp/bsp_uart.h"
 #include "app/app_state.h"
+#include "drivers/temp_sensor_mock.h"
 
 #include <stddef.h>
 #include <stdint.h>
@@ -21,13 +22,15 @@ static int cmd_status(int argc, char *argv[]);
 static int cmd_fan(int argc, char *argv[]);
 static int cmd_temp(int argc, char * argv[]);
 static int cmd_mode(int argc, char * argv[]);
+static int sensor_set(int argc, char * argv[]);
 
 static const cli_cmd_t s_cmds[] = {
     {"help", cmd_help, "list commands"},
     {"status", cmd_status, "show controller state"},
     {"fan", cmd_fan, "set fan speed"},
     {"set-temp", cmd_temp, "set temperature"},
-    {"set-mode", cmd_mode, "set mode"}
+    {"set-mode", cmd_mode, "set mode"},
+    {"sensor", sensor_set, "Mock set temperature for sensor"}
 };
 
 static const char * const MODE_STR[] = { "OFF", "COOL", "HEAT", "FAN" };
@@ -192,5 +195,37 @@ static int cmd_mode(int argc, char * argv[])
         return -1;
     }
     bsp_uart_write("OK\r\n");
+    return 0;
+}
+
+static int sensor_set(int argc, char * argv[])
+{
+    if (argc != 3) {
+        bsp_uart_write("usage: sensor <set|fault> arg\r\n");
+        return -1;
+    }
+
+    char * end;
+
+    if (strcasecmp(argv[1], "SET") == 0) {
+        long out = strtol(argv[2], &end, 10);
+        temp_sensor_mock_set(out);
+        if (end == argv[2] || *end != 0) {
+            bsp_uart_write("sensor set: invalid number\r\n");
+            return -1;
+        }
+        bsp_uart_write("sensor set OK\r\n");
+    } else if (strcasecmp(argv[1], "FAULT") == 0) {
+        if (strcasecmp(argv[2], "ON") == 0 || strcasecmp(argv[2], "OFF") == 0) {
+            temp_sensor_mock_set_fault(argv[2]);
+            bsp_uart_write("sensor fault OK\r\n");
+        } else {
+            bsp_uart_write("sensor fault: invalid fault\r\n");
+            return -1;
+        }
+    } else {
+        bsp_uart_write("Invalid args \r\n");
+        return -1;
+    }
     return 0;
 }

@@ -6,4 +6,5 @@ idf_component_register(
             "bsp/bsp_uart.c"
             "cli/cli.c"
             "app/app_state.c"
+            "drivers/temp_sensor_mock.c"
     INCLUDE_DIRS ".")
