@@ -4,6 +4,12 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#define TARGET_MIN_C   16     // degrees
+#define TARGET_MAX_C   30
+
+#define FAN_MIN_PCT    0      // percent
+#define FAN_MAX_PCT    100
+
 typedef enum {MODE_OFF, MODE_COOL, MODE_HEAT, MODE_FAN} hvac_mode_t;
 typedef enum {ALARM_NONE, ALARM_SENSOR, ALARM_OVERTEMP} hvac_alarm_t;
 
@@ -18,7 +24,7 @@ typedef struct
 
 const hvac_state_t * app_state_get(void);
 bool app_state_set_fan(uint8_t percent);
-bool app_state_set_temp(int16_t temp);
+bool app_state_set_target(int16_t temp);
 bool app_state_set_mode(hvac_mode_t mode);
 
 #endif

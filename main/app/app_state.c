@@ -16,18 +16,17 @@ const hvac_state_t * app_state_get(void)
 
 bool app_state_set_fan(uint8_t percent)
 {
-    if (percent > 100) return false;
+    if (percent > FAN_MAX_PCT) return false;
     s_state.fan_percent = percent;
     return true;
 }
 
-bool app_state_set_temp(int16_t temp)
+bool app_state_set_target(int16_t target_x10)
 {
-    if (temp < 150 || temp > 300) return false;
-    s_state.temp_x10 = temp;
+    if (target_x10 < TARGET_MIN_C * 10 || target_x10 > TARGET_MAX_C * 10) return false;
+    s_state.target_x10 = target_x10;
     return true;
 }
-
 bool app_state_set_mode(hvac_mode_t mode)
 {
     switch ((int)mode) {

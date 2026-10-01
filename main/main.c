@@ -6,11 +6,14 @@
 #include "drivers/led.h"
 #include "bsp/bsp_timer.h"
 #include "bsp/bsp_uart.h"
-#include "cli/cli.h"
 
 static const char * TAG = "MAIN";
 
-#define CLI_TEST    0
+#define CLI_TEST    1
+
+#if CLI_TEST
+#include "cli/cli.h"
+#endif
 
 void app_main(void)
 {
