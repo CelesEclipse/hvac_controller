@@ -1,19 +1,18 @@
 #include <esp_log.h>
-#include <esp_rom_sys.h>
 #include <stdint.h>
 #include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
+
 #include "bsp/bsp_gpio.h"
-#include "drivers/led.h"
 #include "bsp/bsp_timer.h"
 #include "bsp/bsp_uart.h"
-
-static const char * TAG = "MAIN";
-
-#define CLI_TEST    1
-
-#if CLI_TEST
+#include "drivers/led.h"
 #include "cli/cli.h"
-#endif
+#include "services/control_services.h"
+
+static const char *TAG = "MAIN";
+
+#define HEARTBEAT_MS  10000
 
 void app_main(void)
 {
@@ -29,21 +28,27 @@ void app_main(void)
         ESP_LOGE(TAG, "Failed to initialize bsp uart");
         return;
     }
+    control_init();
 
-    uint32_t last_hb = 0;
-    ESP_LOGI(TAG, "Timer init done");
+    uint32_t last_hb   = bsp_timer_ticks();
+    uint32_t last_ctrl = last_hb;
 
     while (1) {
-#if CLI_TEST
         uint8_t c;
         while (bsp_uart_read_byte(&c) == 1) {
-            cli_feed(c);
+            cli_feed((char)c);
         }
-#else
+
         uint32_t now = bsp_timer_ticks();
-        if ((uint32_t)(now - last_hb) >= 1000) {
-            last_hb += 1000;
+
+        if ((uint32_t)(now - last_hb) >= HEARTBEAT_MS) {
+            last_hb += HEARTBEAT_MS;
             ESP_LOGI(TAG, "heartbeat, uptime %lu ms", (unsigned long)now);
+        }
+
+        if ((uint32_t)(now - last_ctrl) >= CONTROL_PERIOD_MS) {
+            last_ctrl += CONTROL_PERIOD_MS;
+            control_step();
         }
 
         if (bsp_gpio_take_button_event()) {
@@ -53,7 +58,7 @@ void app_main(void)
                 led_toggle();
             }
         }
-#endif
+
         vTaskDelay(pdMS_TO_TICKS(10));
     }
 }

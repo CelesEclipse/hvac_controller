@@ -1,6 +1,7 @@
 #include "cli.h"
 #include "bsp/bsp_uart.h"
 #include "app/app_state.h"
+#include "drivers/temp_sensor.h"
 #include "drivers/temp_sensor_mock.h"
 
 #include <stddef.h>
@@ -208,21 +209,22 @@ static int sensor_set(int argc, char * argv[])
     char * end;
 
     if (strcasecmp(argv[1], "SET") == 0) {
-        long out = strtol(argv[2], &end, 10);
-        temp_sensor_mock_set(out);
-        if (end == argv[2] || *end != 0) {
+        long v = strtol(argv[2], &end, 10);
+        if (end == argv[2] || *end != '\0') {
             bsp_uart_write("sensor set: invalid number\r\n");
             return -1;
         }
-        bsp_uart_write("sensor set OK\r\n");
-    } else if (strcasecmp(argv[1], "FAULT") == 0) {
-        if (strcasecmp(argv[2], "ON") == 0 || strcasecmp(argv[2], "OFF") == 0) {
-            temp_sensor_mock_set_fault(argv[2]);
-            bsp_uart_write("sensor fault OK\r\n");
-        } else {
-            bsp_uart_write("sensor fault: invalid fault\r\n");
+        if (v < SENSOR_MIN_C || v > SENSOR_MAX_C) {
+            bsp_uart_write("sensor set: out of range\r\n");
             return -1;
         }
+        temp_sensor_mock_set((int16_t)(v * 10));
+        bsp_uart_write("sensor set OK\r\n");
+    } else if (strcasecmp(argv[1], "FAULT") == 0) {
+        if      (strcasecmp(argv[2], "ON") == 0)    temp_sensor_mock_set_fault(true);
+        else if (strcasecmp(argv[2], "OFF") == 0)   temp_sensor_mock_set_fault(false);
+        else {bsp_uart_write("sensor fault: use on|off\r\n"); return -1;}
+        bsp_uart_write("sensor fault OK\r\n");
     } else {
         bsp_uart_write("Invalid args \r\n");
         return -1;

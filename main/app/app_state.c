@@ -40,3 +40,14 @@ bool app_state_set_mode(hvac_mode_t mode)
     }
     return true;
 }
+
+void app_state_set_measured(int16_t temp_x10)
+{
+    s_state.temp_x10 = temp_x10;
+}
+
+void app_state_set_alarm(hvac_alarm_t alarm)
+{
+    if ((unsigned)alarm > ALARM_OVERTEMP) return;
+    s_state.alarm = alarm;
+}

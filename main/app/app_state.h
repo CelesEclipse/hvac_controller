@@ -26,5 +26,7 @@ const hvac_state_t * app_state_get(void);
 bool app_state_set_fan(uint8_t percent);
 bool app_state_set_target(int16_t temp);
 bool app_state_set_mode(hvac_mode_t mode);
+void app_state_set_measured(int16_t temp_x10);
+void app_state_set_alarm(hvac_alarm_t alarm);
 
 #endif

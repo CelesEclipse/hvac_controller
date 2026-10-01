@@ -7,4 +7,5 @@ idf_component_register(
             "cli/cli.c"
             "app/app_state.c"
             "drivers/temp_sensor_mock.c"
+            "services/control_services.c"
     INCLUDE_DIRS ".")
