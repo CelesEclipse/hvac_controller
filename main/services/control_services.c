@@ -9,8 +9,8 @@
 
 static const char * TAG = "CONTROL";
 static bool s_sensor_ok = true;
-static bool s_act_ok    = true;
 static hvac_fsm_t s_fsm = FSM_IDLE;
+static const char * FSM_STR[] = {"FSM_IDLE", "FSM_COOLING", "FSM_FAULT"};
 
 static hvac_fsm_t decide(const hvac_state_t * s, hvac_fsm_t cur, bool sen_ok)
 {
@@ -59,30 +59,27 @@ void control_init(void)
 
 void control_step(void)
 {
+    /* 1. inputs */
     int16_t t = 0;
     bool sen_ok = (temp_sensor_read_x10(&t) == ESP_OK)
-            && (t >= SENSOR_MIN_C * 10) && (t <= SENSOR_MAX_C * 10);
-    
-    const hvac_state_t * s = app_state_get();
-    hvac_fsm_t next = decide(s, s_fsm, sen_ok);
-    if (next != s_fsm) {
-        ESP_LOGI(TAG, "FSM %d -> %d", s_fsm, next);
-        s_fsm = next;
-    }
-    apply_outputs(s_fsm, s);
-    
+               && (t >= SENSOR_MIN_C * 10) && (t <= SENSOR_MAX_C * 10);
+
     if (sen_ok) {
         app_state_set_measured(t);
-        if (app_state_get()->alarm == ALARM_SENSOR) {
-            app_state_set_alarm(ALARM_NONE);
-        }
+        if (app_state_get()->alarm == ALARM_SENSOR) app_state_set_alarm(ALARM_NONE);
     } else {
         app_state_set_alarm(ALARM_SENSOR);
     }
 
-    if (sen_ok != s_sensor_ok) {
-        s_sensor_ok = sen_ok;
-        if (sen_ok) ESP_LOGI(TAG, "sensor recovered");
-        else    ESP_LOGW(TAG, "sensor invalid");
+    /* 2. decide */
+    const hvac_state_t *s = app_state_get();
+    hvac_fsm_t next = decide(s, s_fsm, sen_ok);
+    if (next != s_fsm) {
+        ESP_LOGI(TAG, "FSM %s -> %s", FSM_STR[s_fsm], FSM_STR[next]);
+        s_fsm = next;
     }
+
+    /* 3. outputs */
+    apply_outputs(s_fsm, s);
+
 }
