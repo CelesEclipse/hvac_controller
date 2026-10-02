@@ -21,7 +21,7 @@ static size_t   s_len = 0;
 
 static int cmd_help(int argc, char *argv[]);
 static int cmd_status(int argc, char *argv[]);
-// static int cmd_fan(int argc, char *argv[]);
+static int cmd_fan(int argc, char *argv[]);
 static int cmd_temp(int argc, char * argv[]);
 static int cmd_mode(int argc, char * argv[]);
 static int sensor_set(int argc, char * argv[]);
@@ -30,7 +30,7 @@ static int cmd_act(int argc, char * argv[]);
 static const cli_cmd_t s_cmds[] = {
     {"help", cmd_help, "list commands"},
     {"status", cmd_status, "show controller state"},
-    //{"fan", cmd_fan, "set fan speed"},
+    {"fan", cmd_fan, "set fan speed"},
     {"set-temp", cmd_temp, "set temperature"},
     {"set-mode", cmd_mode, "set mode"},
     {"sensor", sensor_set, "Mock set temperature for sensor"},
@@ -143,27 +143,27 @@ static int cmd_status(int argc, char *argv[])
     return 0;
 }
 
-// static int cmd_fan(int argc, char *argv[])
-// {
-//     if (argc != 2) {
-//         bsp_uart_write("usage: fan <0-100>\r\n");
-//         return -1;
-//     }
+static int cmd_fan(int argc, char *argv[])
+{
+    if (argc != 2) {
+        bsp_uart_write("usage: fan <0-100>\r\n");
+        return -1;
+    }
 
-//     char * end;
-//     long v = strtol(argv[1], &end, 10);
-//     if (end == argv[1] || *end != 0) {
-//         bsp_uart_write("fan: invalid number\r\n");
-//         return -1;
-//     }
-//     if (v < FAN_MIN_PCT || v > FAN_MAX_PCT) {
-//         bsp_uart_write("fan: must be 0-100\r\n");
-//         return -1;
-//     }
-//     app_state_set_fan(v);
-//     bsp_uart_write("OK\r\n");
-//     return 0;
-// }
+    char * end;
+    long v = strtol(argv[1], &end, 10);
+    if (end == argv[1] || *end != 0) {
+        bsp_uart_write("fan: invalid number\r\n");
+        return -1;
+    }
+    if (v < FAN_MIN_PCT || v > FAN_MAX_PCT) {
+        bsp_uart_write("fan: must be 0-100\r\n");
+        return -1;
+    }
+    app_state_set_fan(v);
+    bsp_uart_write("OK\r\n");
+    return 0;
+}
 
 static int cmd_temp(int argc, char * argv[])
 {

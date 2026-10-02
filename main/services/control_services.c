@@ -10,6 +10,41 @@
 static const char * TAG = "CONTROL";
 static bool s_sensor_ok = true;
 static bool s_act_ok    = true;
+static hvac_fsm_t s_fsm = FSM_IDLE;
+
+static hvac_fsm_t decide(const hvac_state_t * s, hvac_fsm_t cur, bool sen_ok)
+{
+    if (!sen_ok)               return FSM_FAULT;
+    if (s->mode != MODE_COOL)  return FSM_IDLE;
+    switch (cur) {
+    case FSM_COOLING:
+        return (s->temp_x10 <= s->target_x10) ? FSM_IDLE : FSM_COOLING;
+    case FSM_FAULT:
+        return FSM_IDLE;
+    case FSM_IDLE:
+    default:
+        return (s->temp_x10 >= s->target_x10 + HYSTERESIS_X10) ? FSM_COOLING : FSM_IDLE;
+    }
+}
+
+static void apply_outputs(hvac_fsm_t fsm, const hvac_state_t *s)
+{
+    switch (fsm) {
+    case FSM_COOLING:
+        actuator_set_compressor(true);
+        actuator_set_fan(s->fan_percent);
+        break;
+    case FSM_IDLE:
+        actuator_set_compressor(false);
+        actuator_set_fan(0);
+        break;
+    case FSM_FAULT:
+        actuator_set_compressor(false);
+        actuator_set_fan(FAN_SAFE_PCT);
+        break;
+    }
+    actuator_set_alarm(s->alarm != ALARM_NONE);
+}
 
 void control_init(void)
 {
@@ -27,10 +62,15 @@ void control_step(void)
     int16_t t = 0;
     bool sen_ok = (temp_sensor_read_x10(&t) == ESP_OK)
             && (t >= SENSOR_MIN_C * 10) && (t <= SENSOR_MAX_C * 10);
-    bool act_ok = (actuator_get_fan() == 0)
-            && (actuator_get_compressor() == false)
-            && (actuator_get_alarm() == false);
-
+    
+    const hvac_state_t * s = app_state_get();
+    hvac_fsm_t next = decide(s, s_fsm, sen_ok);
+    if (next != s_fsm) {
+        ESP_LOGI(TAG, "FSM %d -> %d", s_fsm, next);
+        s_fsm = next;
+    }
+    apply_outputs(s_fsm, s);
+    
     if (sen_ok) {
         app_state_set_measured(t);
         if (app_state_get()->alarm == ALARM_SENSOR) {
@@ -38,10 +78,6 @@ void control_step(void)
         }
     } else {
         app_state_set_alarm(ALARM_SENSOR);
-    }
-
-    if (act_ok) {
-        // do something here to affect status ?
     }
 
     if (sen_ok != s_sensor_ok) {

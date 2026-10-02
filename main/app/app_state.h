@@ -9,7 +9,10 @@
 
 #define FAN_MIN_PCT    0      // percent
 #define FAN_MAX_PCT    100
+#define FAN_SAFE_PCT    50
+#define HYSTERESIS_X10  10
 
+typedef enum {FSM_IDLE, FSM_COOLING, FSM_FAULT} hvac_fsm_t;
 typedef enum {MODE_OFF, MODE_COOL, MODE_HEAT, MODE_FAN} hvac_mode_t;
 typedef enum {ALARM_NONE, ALARM_SENSOR, ALARM_OVERTEMP} hvac_alarm_t;
 
