@@ -25,7 +25,6 @@ static int cmd_fan(int argc, char *argv[]);
 static int cmd_temp(int argc, char * argv[]);
 static int cmd_mode(int argc, char * argv[]);
 static int sensor_set(int argc, char * argv[]);
-static int cmd_act(int argc, char * argv[]);
 
 static const cli_cmd_t s_cmds[] = {
     {"help", cmd_help, "list commands"},
@@ -33,8 +32,7 @@ static const cli_cmd_t s_cmds[] = {
     {"fan", cmd_fan, "set fan speed"},
     {"set-temp", cmd_temp, "set temperature"},
     {"set-mode", cmd_mode, "set mode"},
-    {"sensor", sensor_set, "Mock set temperature for sensor"},
-    {"act", cmd_act, "Actuator query"}
+    {"sensor", sensor_set, "Mock set temperature for sensor"}
 };
 
 static const char * const MODE_STR[] = { "OFF", "COOL", "HEAT", "FAN" };
@@ -231,41 +229,6 @@ static int sensor_set(int argc, char * argv[])
         bsp_uart_write("sensor fault OK\r\n");
     } else {
         bsp_uart_write("Invalid args \r\n");
-        return -1;
-    }
-    return 0;
-}
-
-static int cmd_act(int argc, char * argv[])
-{
-    if (argc != 3) {
-        bsp_uart_write("usage: act <fan|comp|alarm> <arg>\r\n");
-        return -1;
-    }
-
-    char * end;
-    if (strcasecmp(argv[1], "FAN") == 0) {
-        long v = strtol(argv[2], &end, 10);
-        if (end == argv[2] || *end != '\0') {
-            bsp_uart_write("act fan: invalid number\r\n");
-            return -1;
-        }
-        if (v < FAN_MIN_PCT || v > FAN_MAX_PCT) {
-            bsp_uart_write("act fan: out of range\r\n");
-            return -1;
-        }
-        actuator_set_fan((uint8_t)v);
-        bsp_uart_write("act fan OK\r\n");
-    } else if (strcasecmp(argv[1], "COMP") == 0) {
-        if      (strcasecmp(argv[2], "ON") == 0)    actuator_set_compressor(true);
-        else if (strcasecmp(argv[2], "OFF") == 0)   actuator_set_compressor(false);
-        else {bsp_uart_write("act comp: use on|off\r\n"); return -1;}
-    } else if (strcasecmp(argv[1], "ALARM") == 0) {
-        if      (strcasecmp(argv[2], "ON") == 0)    actuator_set_alarm(true);
-        else if (strcasecmp(argv[2], "OFF") == 0)   actuator_set_alarm(false);
-        else {bsp_uart_write("act alarm: use on|off\r\n"); return -1;}
-    } else {
-        bsp_uart_write("Invalid args\r\n");
         return -1;
     }
     return 0;

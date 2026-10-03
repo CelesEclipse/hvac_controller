@@ -8,7 +8,6 @@
 #include "esp_log.h"
 
 static const char * TAG = "CONTROL";
-static bool s_sensor_ok = true;
 static hvac_fsm_t s_fsm = FSM_IDLE;
 static const char * FSM_STR[] = {"FSM_IDLE", "FSM_COOLING", "FSM_FAULT"};
 
