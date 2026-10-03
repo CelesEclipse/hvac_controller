@@ -35,6 +35,7 @@ static const cli_cmd_t s_cmds[] = {
     {"sensor", sensor_set, "Mock set temperature for sensor"}
 };
 
+static const char * const FSM_STR[] = {"FSM_IDLE", "FSM_COOLING", "FSM_FAULT"};
 static const char * const MODE_STR[] = { "OFF", "COOL", "HEAT", "FAN" };
 static const char * const ALARM_STR[] = { "ALARM_NONE", "ALARM_SENSOR", "ALARM_OVERTEMP" };
 
@@ -130,9 +131,16 @@ static int cmd_status(int argc, char *argv[])
     bsp_uart_write(buf);
     snprintf(buf, sizeof buf, "Target:      %d.%d C\r\n", s->target_x10 / 10, s->target_x10 % 10);
     bsp_uart_write(buf);
-    snprintf(buf, sizeof buf, "Fan:         %u %%\r\n", s->fan_percent);
+    snprintf(buf, sizeof buf, "Fan:         %u %% (setting %u %%)\r\n",
+            actuator_get_fan(), s->fan_percent);
+    bsp_uart_write(buf);
+
+    snprintf(buf, sizeof buf, "Compressor:  %s\r\n",
+            actuator_get_compressor() ? "ON" : "OFF");
     bsp_uart_write(buf);
     snprintf(buf, sizeof buf, "Mode:        %s\r\n", MODE_STR[s->mode]);
+    bsp_uart_write(buf);
+    snprintf(buf, sizeof buf, "State:       %s\r\n", FSM_STR[s->fsm]);
     bsp_uart_write(buf);
     snprintf(buf, sizeof(buf), "Alarm:      %s\r\n", ALARM_STR[s->alarm]);
     bsp_uart_write(buf);

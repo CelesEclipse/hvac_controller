@@ -18,11 +18,12 @@ typedef enum {ALARM_NONE, ALARM_SENSOR, ALARM_OVERTEMP} hvac_alarm_t;
 
 typedef struct
 {
-    int16_t      temp_x10;     // 274 = 27.4 C
-    int16_t      target_x10;   // 240 = 24.0 C
-    uint8_t      fan_percent;  // 0..100
-    hvac_mode_t  mode;
-    hvac_alarm_t alarm;
+    int16_t         temp_x10;     // 274 = 27.4 C
+    int16_t         target_x10;   // 240 = 24.0 C
+    uint8_t         fan_percent;  // 0..100
+    hvac_mode_t     mode;
+    hvac_alarm_t    alarm;
+    hvac_fsm_t      fsm;
 } hvac_state_t;
 
 const hvac_state_t * app_state_get(void);
@@ -31,5 +32,6 @@ bool app_state_set_target(int16_t temp);
 bool app_state_set_mode(hvac_mode_t mode);
 void app_state_set_measured(int16_t temp_x10);
 void app_state_set_alarm(hvac_alarm_t alarm);
+void app_state_set_fsm(hvac_fsm_t fsm);
 
 #endif

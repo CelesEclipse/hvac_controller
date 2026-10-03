@@ -8,7 +8,6 @@
 #include "esp_log.h"
 
 static const char * TAG = "CONTROL";
-static hvac_fsm_t s_fsm = FSM_IDLE;
 static const char * FSM_STR[] = {"FSM_IDLE", "FSM_COOLING", "FSM_FAULT"};
 
 static hvac_fsm_t decide(const hvac_state_t * s, hvac_fsm_t cur, bool sen_ok)
@@ -72,13 +71,13 @@ void control_step(void)
 
     /* 2. decide */
     const hvac_state_t *s = app_state_get();
-    hvac_fsm_t next = decide(s, s_fsm, sen_ok);
-    if (next != s_fsm) {
-        ESP_LOGI(TAG, "FSM %s -> %s", FSM_STR[s_fsm], FSM_STR[next]);
-        s_fsm = next;
+    hvac_fsm_t next = decide(s, s->fsm, sen_ok);
+    if (next != s->fsm) {
+        ESP_LOGI(TAG, "FSM %s -> %s", FSM_STR[s->fsm], FSM_STR[next]);
+        app_state_set_fsm(next);
     }
 
     /* 3. outputs */
-    apply_outputs(s_fsm, s);
+    apply_outputs(s->fsm, s);
 
 }
